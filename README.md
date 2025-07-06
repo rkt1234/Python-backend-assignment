@@ -212,8 +212,4 @@ Backend Developer | IIIT Kalyani 2024
 
 ---
 
-## ✅ Status
 
-✔️ Assignment Complete  
-✔️ Production-ready architecture  
-✔️ Async API with background job processing  
