@@ -1,6 +1,6 @@
 # 🔧 Async Job Processor API – FastAPI, Celery, Redis, PostgreSQL
 
-This is a scalable, containerized backend service built using **FastAPI** with async support, **Celery** for background task processing, **Redis** as the message broker, and **PostgreSQL** as the database.
+This is a containerized backend service built using **FastAPI** with async support, **Celery** for background task processing, **Redis** as the message broker, and **PostgreSQL** as the database.
 
 ### 🚀 Features
 
