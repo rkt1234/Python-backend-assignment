@@ -105,7 +105,7 @@ cd <project-folder>
 Create a `.env` file in the project root:
 
 ```env
-DATABASE_URL=postgresql://postgres:postgres@db:6543/job_db
+DATABASE_URL=postgresql://postgres.exbtwkzmfpjtrgzrcuer:[YOUR-PASSWORD]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
 REDIS_URL=redis://redis:6379/0
 ```
 
