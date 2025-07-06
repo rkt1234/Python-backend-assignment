@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 class JobCreate(BaseModel):
@@ -8,4 +8,12 @@ class JobCreate(BaseModel):
 
 class JobResponse(BaseModel):
     job_id: UUID
+    status: str
+
+class JobStatusResponse(BaseModel):
+    status: str
+
+class JobResultResponse(BaseModel):
+    job_id: UUID
+    result: Optional[float]
     status: str
