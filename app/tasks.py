@@ -16,7 +16,7 @@ def process_job(job_id: str, data: list, operation: str):
 
     try:
         # Simulate delay
-        asyncio.run(asyncio.sleep(2))
+        asyncio.run(asyncio.sleep(5))
 
         if operation == "square_sum":
             result = sum([x**2 for x in data])
