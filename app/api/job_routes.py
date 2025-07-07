@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update
 from uuid import UUID
-
+from app.models import Job, User
+from app.api.utils import get_current_user  # 🔐 get the current user from token
 from app.tasks import process_job
 from app.db import get_db
 from app.models import Job
@@ -12,7 +13,11 @@ from app.api.schemas import JobCreate, JobResponse, JobStatusResponse, JobResult
 router = APIRouter()
 
 @router.post("/", response_model=JobResponse)
-async def create_job(payload: JobCreate, db: AsyncSession = Depends(get_db)):
+async def create_job(
+    payload: JobCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # 🔐 Authenticated user
+):
     if payload.operation not in ["square_sum", "cube_sum"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -22,17 +27,19 @@ async def create_job(payload: JobCreate, db: AsyncSession = Depends(get_db)):
     job = Job(
         data=payload.data,
         operation=payload.operation,
-        status="PENDING"
+        status="PENDING",
+        user_id=current_user.id  # 🔗 Associate job with user
     )
 
     db.add(job)
     await db.commit()
     await db.refresh(job)
 
-    # Dispatch background processing
+    # Background task dispatch
     process_job.delay(str(job.id), payload.data, payload.operation)
 
     return JobResponse(job_id=job.id, status=job.status)
+
 
 
 @router.get("/{job_id}/status", response_model=JobStatusResponse)

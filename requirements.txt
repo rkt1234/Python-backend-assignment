@@ -6,3 +6,6 @@ psycopg2-binary
 python-dotenv
 celery
 redis
+pydantic[email]
+passlib
+python-jose
