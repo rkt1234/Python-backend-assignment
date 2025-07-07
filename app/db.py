@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 import os
 
 # Load environment variables from .env
@@ -13,29 +14,33 @@ HOST = os.getenv("host")
 PORT = os.getenv("port")
 DBNAME = os.getenv("dbname")
 
-# Construct the SQLAlchemy connection string
-DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}"
+# Construct the async SQLAlchemy connection string
+DATABASE_URL = f"postgresql+asyncpg://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}"
+SYNC_DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}"
 
-# Create the engine
-engine = create_engine(DATABASE_URL)
 
-# Test the connection immediately when the module is imported
-try:
-    with engine.connect() as connection:
-        print("✅ Connection successful!")
-except Exception as e:
-    print(f"❌ Failed to connect: {e}")
+# Create the async engine
+engine = create_async_engine(DATABASE_URL, echo=True)
 
-# Create a configured "SessionLocal" class
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Optional: Async DB connection test function (do not run here!)
+async def test_connection():
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(lambda x: None)
+        print("✅ Async DB connection successful!")
+    except Exception as e:
+        print(f"❌ Async DB connection failed: {e}")
+
+# Create async session maker
+AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
+
+sync_engine = create_engine(SYNC_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
 # Base class for all ORM models
 Base = declarative_base()
 
-# Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Dependency to get async DB session
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session

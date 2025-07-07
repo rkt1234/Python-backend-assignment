@@ -1,10 +1,11 @@
 import asyncio
 from app.models import Job
-from app.db import SessionLocal
+from app.db import SessionLocal 
 from app.celery_worker import celery_app
 
 @celery_app.task
 def process_job(job_id: str, data: list, operation: str):
+    print("isme ayah ")
     db = SessionLocal()
     job = db.query(Job).filter(Job.id == job_id).first()
 
