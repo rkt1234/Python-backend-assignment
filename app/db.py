@@ -27,9 +27,9 @@ async def test_connection():
     try:
         async with engine.begin() as conn:
             await conn.run_sync(lambda x: None)
-        print("✅ Async DB connection successful!")
+        print("  Async DB connection successful!")
     except Exception as e:
-        print(f"❌ Async DB connection failed: {e}")
+        print(f"   Async DB connection failed: {e}")
 
 # Create async session maker
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)

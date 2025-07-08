@@ -14,7 +14,7 @@ from app.api.schemas import JobCreate, JobResponse, JobStatusResponse, JobResult
 
 router = APIRouter()
 
-# ✅ Rate-limited job creation
+#   Rate-limited job creation
 @router.post("/", response_model=JobResponse)
 async def create_job(
     request: Request,
@@ -48,7 +48,7 @@ async def create_job(
 
 
 
-# ✅ Other routes remain unchanged
+#   Other routes remain unchanged
 
 @router.get("/{job_id}/status", response_model=JobStatusResponse)
 async def get_job_status(

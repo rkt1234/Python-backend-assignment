@@ -35,7 +35,7 @@ async def add_user_to_request(request: Request, call_next):
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("✅ Tables created")
+    print("  Tables created")
 
 # 👇 Include routers
 app.include_router(job_router, prefix="/jobs", tags=["Jobs"])
