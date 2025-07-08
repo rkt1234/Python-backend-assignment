@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional
+from typing import List, Optional, Literal
 from uuid import UUID
 
 # ==== Job Schemas ====
@@ -26,6 +26,7 @@ class UserCreate(BaseModel):
     name: str
     email: EmailStr
     password: str
+    role: Literal["user", "admin"] = "user"
 
 class UserCreateResponse(BaseModel):
     token: Optional[str] = None

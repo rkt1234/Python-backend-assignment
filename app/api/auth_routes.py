@@ -24,7 +24,7 @@ async def register_user(payload: UserCreate, db: AsyncSession = Depends(get_db))
 
     # Create and store new user
     hashed_pw = hash_password(payload.password)
-    new_user = User(name=payload.name, email=payload.email, password=hashed_pw)
+    new_user = User(name=payload.name, email=payload.email, password=hashed_pw, role=payload.role)
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)

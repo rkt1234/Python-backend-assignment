@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -47,35 +48,36 @@ async def create_job(
 async def get_job_status(
     job_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 🔐 Require auth
+    current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Job).where(Job.id == job_id))
+    result = await db.execute(
+        select(Job).where(Job.id == job_id, Job.is_deleted == False)
+    )
     job = result.scalar_one_or_none()
     
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # 🔒 Make sure job belongs to the logged-in user
     if job.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to view this job")
 
     return JobStatusResponse(status=job.status)
 
 
-
 @router.get("/{job_id}/result", response_model=JobResultResponse)
 async def get_job_result(
     job_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 🔐 Require auth
+    current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Job).where(Job.id == job_id))
+    result = await db.execute(
+        select(Job).where(Job.id == job_id, Job.is_deleted == False)
+    )
     job = result.scalar_one_or_none()
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # 🔒 Only allow if the job belongs to the current user
     if job.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this job result")
 
@@ -87,15 +89,18 @@ async def get_job_result(
 
 @router.get("/{status}/{page_no}")
 async def get_my_jobs(
-    status: Literal["all", "PENDING", "INPROGRESS", "SUCCESS", "FAILED"] = Path(..., description="Job status to filter"),
-    page_no: int = Path(..., ge=1, description="Page number, starting from 1"),
+    status: Literal["all", "PENDING", "INPROGRESS", "SUCCESS", "FAILED"] = Path(...),
+    page_no: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     PAGE_SIZE = 10
     offset = (page_no - 1) * PAGE_SIZE
 
-    query = select(Job).where(Job.user_id == current_user.id)
+    query = select(Job).where(
+        Job.user_id == current_user.id,
+        Job.is_deleted == False
+    )
 
     if status != "all":
         query = query.where(Job.status == status)
@@ -114,3 +119,29 @@ async def get_my_jobs(
         }
         for job in jobs
     ]
+
+@router.post("/cleanup/success-jobs")
+async def cleanup_successful_jobs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    one_day_ago = datetime.utcnow() - timedelta(days=1)
+
+    stmt = (
+        update(Job)
+        .where(
+            Job.status == "SUCCESS",
+            Job.is_deleted == False,
+            Job.created_at < one_day_ago
+        )
+        .values(is_deleted=True)
+    )
+
+    result = await db.execute(stmt)
+    await db.commit()
+
+    return {"message": "Cleanup completed", "rows_updated": result.rowcount}
+
