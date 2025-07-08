@@ -1,8 +1,9 @@
 import uuid
-from sqlalchemy import Column, String, Float, ForeignKey, ARRAY
+from sqlalchemy import Column, DateTime, String, Float, ForeignKey, ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
