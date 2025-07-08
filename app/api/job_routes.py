@@ -120,7 +120,7 @@ async def get_my_jobs(
     ]
 
 
-@router.post("/cleanup/success-jobs")
+@router.delete("/cleanup/success-jobs")
 async def cleanup_successful_jobs(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
