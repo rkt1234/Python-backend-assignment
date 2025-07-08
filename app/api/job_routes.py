@@ -5,8 +5,7 @@ from sqlalchemy import update
 from typing import Literal
 from uuid import UUID
 from datetime import datetime, timedelta
-from slowapi import limit
-
+from app.api.rate_limiter import is_rate_limited  # update path
 from app.db import get_db
 from app.models import Job, User
 from app.api.utils import get_current_user
@@ -17,14 +16,14 @@ router = APIRouter()
 
 # ✅ Rate-limited job creation
 @router.post("/", response_model=JobResponse)
-@limit("3/minute")  # ⏱️ 3 job creations per minute per user
 async def create_job(
-    request: Request,  # Required by SlowAPI
+    request: Request,
     payload: JobCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    request.state.user = current_user  # 👈 Needed for user-based rate limit
+    if await is_rate_limited(str(current_user.id)):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
 
     if payload.operation not in ["square_sum", "cube_sum"]:
         raise HTTPException(
@@ -46,6 +45,7 @@ async def create_job(
     process_job.delay(str(job.id), payload.data, payload.operation)
 
     return JobResponse(job_id=job.id, status=job.status)
+
 
 
 # ✅ Other routes remain unchanged
